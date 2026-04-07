@@ -1,0 +1,253 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-sans); }
+  .wrap { padding: 1.5rem 0; }
+  .phase { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); margin-bottom: 1rem; overflow: hidden; }
+  .phase-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer; user-select: none; }
+  .phase-header:hover { background: var(--color-background-secondary); }
+  .badge { font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+  .ph-title { font-size: 15px; font-weight: 500; color: var(--color-text-primary); flex: 1; }
+  .ph-sub { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
+  .chevron { font-size: 12px; color: var(--color-text-tertiary); transition: transform 0.2s; }
+  .chevron.open { transform: rotate(90deg); }
+  .phase-body { border-top: 0.5px solid var(--color-border-tertiary); padding: 0 16px 14px; display: none; }
+  .phase-body.open { display: block; }
+  .steps { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .step { display: flex; gap: 10px; align-items: flex-start; }
+  .step-num { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; flex-shrink: 0; margin-top: 1px; }
+  .step-text { font-size: 13px; color: var(--color-text-primary); line-height: 1.5; }
+  .step-text strong { font-weight: 500; }
+  .step-text code { font-family: var(--font-mono); font-size: 12px; background: var(--color-background-secondary); padding: 1px 5px; border-radius: 4px; }
+  .tech-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 0.5px solid var(--color-border-tertiary); }
+  .tech { font-size: 11px; padding: 3px 8px; border-radius: 4px; background: var(--color-background-secondary); color: var(--color-text-secondary); border: 0.5px solid var(--color-border-tertiary); }
+  .ask-btn { margin-top: 12px; background: none; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 6px 12px; font-size: 12px; color: var(--color-text-secondary); cursor: pointer; width: 100%; text-align: left; }
+  .ask-btn:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
+  .timeline { display: flex; gap: 0; margin-bottom: 1.25rem; border-radius: var(--border-radius-md); overflow: hidden; border: 0.5px solid var(--color-border-tertiary); }
+  .tl-seg { flex: 1; padding: 8px 4px; text-align: center; font-size: 11px; font-weight: 500; }
+  .tl-label { font-size: 10px; font-weight: 400; margin-top: 2px; opacity: 0.8; }
+</style>
+
+<div class="wrap">
+  <div class="timeline">
+    <div class="tl-seg" style="background:var(--color-background-info);color:var(--color-text-info)">Phase 1<div class="tl-label">Setup</div></div>
+    <div class="tl-seg" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">Phase 2<div class="tl-label">Database</div></div>
+    <div class="tl-seg" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">Phase 3<div class="tl-label">Backend</div></div>
+    <div class="tl-seg" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">Phase 4<div class="tl-label">Auth</div></div>
+    <div class="tl-seg" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">Phase 5<div class="tl-label">Core API</div></div>
+    <div class="tl-seg" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">Phase 6<div class="tl-label">Real-time</div></div>
+    <div class="tl-seg" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">Phase 7<div class="tl-label">Frontend</div></div>
+    <div class="tl-seg" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">Phase 8<div class="tl-label">Deploy</div></div>
+  </div>
+
+  <!-- Phase 1 -->
+  <div class="phase" id="p1">
+    <div class="phase-header" onclick="toggle('p1')">
+      <span class="badge" style="background:var(--color-background-info);color:var(--color-text-info)">Phase 1</span>
+      <div>
+        <div class="ph-title">Project Setup & Structure</div>
+        <div class="ph-sub">Scaffold the monorepo, install dependencies, configure environments</div>
+      </div>
+      <span class="chevron" id="c-p1">▶</span>
+    </div>
+    <div class="phase-body" id="b-p1">
+      <div class="steps">
+        <div class="step"><div class="step-num" style="background:var(--color-background-info);color:var(--color-text-info)">1</div><div class="step-text">Create root folder <code>smart-hammer/</code> with <code>client/</code> and <code>server/</code> subdirectories</div></div>
+        <div class="step"><div class="step-num" style="background:var(--color-background-info);color:var(--color-text-info)">2</div><div class="step-text">Init <strong>Express</strong> server: <code>npm init</code>, install <code>express</code>, <code>cors</code>, <code>dotenv</code>, <code>pg</code>, <code>bcryptjs</code>, <code>jsonwebtoken</code>, <code>socket.io</code></div></div>
+        <div class="step"><div class="step-num" style="background:var(--color-background-info);color:var(--color-text-info)">3</div><div class="step-text">Init <strong>React</strong> client: <code>npx create-react-app client</code> or Vite. Install <code>axios</code>, <code>react-router-dom</code>, <code>socket.io-client</code></div></div>
+        <div class="step"><div class="step-num" style="background:var(--color-background-info);color:var(--color-text-info)">4</div><div class="step-text">Setup <code>.env</code> files: <code>PORT</code>, <code>DATABASE_URL</code>, <code>JWT_SECRET</code>, <code>CLIENT_URL</code></div></div>
+        <div class="step"><div class="step-num" style="background:var(--color-background-info);color:var(--color-text-info)">5</div><div class="step-text">Create folder structure: <code>routes/</code>, <code>controllers/</code>, <code>middleware/</code>, <code>models/</code>, <code>config/</code></div></div>
+      </div>
+      <div class="tech-row">
+        <span class="tech">Node.js</span><span class="tech">Express</span><span class="tech">React</span><span class="tech">dotenv</span><span class="tech">nodemon</span>
+      </div>
+      <button class="ask-btn" onclick="sendPrompt('Show me the complete folder structure and package.json for Smart Hammer PERN project')">Show me the folder structure & package.json ↗</button>
+    </div>
+  </div>
+
+  <!-- Phase 2 -->
+  <div class="phase" id="p2">
+    <div class="phase-header" onclick="toggle('p2')">
+      <span class="badge" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">Phase 2</span>
+      <div>
+        <div class="ph-title">Database Design (PostgreSQL)</div>
+        <div class="ph-sub">Design schema, create tables, relationships, seed data</div>
+      </div>
+      <span class="chevron" id="c-p2">▶</span>
+    </div>
+    <div class="phase-body" id="b-p2">
+      <div class="steps">
+        <div class="step"><div class="step-num" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">1</div><div class="step-text">Design core tables: <strong>users</strong>, <strong>auctions</strong>, <strong>bids</strong>, <strong>categories</strong>, <strong>payments</strong>, <strong>notifications</strong></div></div>
+        <div class="step"><div class="step-num" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">2</div><div class="step-text">Create <code>schema.sql</code> with all tables, primary keys, foreign keys, constraints</div></div>
+        <div class="step"><div class="step-num" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">3</div><div class="step-text">Add indexes on <code>auction_id</code>, <code>user_id</code>, <code>end_time</code> for query performance</div></div>
+        <div class="step"><div class="step-num" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">4</div><div class="step-text">Configure <code>db.js</code> using <code>pg.Pool</code> with connection string from <code>.env</code></div></div>
+        <div class="step"><div class="step-num" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">5</div><div class="step-text">Create <code>seed.sql</code> with sample users, auction items, and test bids</div></div>
+      </div>
+      <div class="tech-row">
+        <span class="tech">PostgreSQL</span><span class="tech">pg (node-postgres)</span><span class="tech">psql CLI</span>
+      </div>
+      <button class="ask-btn" onclick="sendPrompt('Write the complete PostgreSQL schema SQL for Smart Hammer auction system with all tables')">Write the full PostgreSQL schema ↗</button>
+    </div>
+  </div>
+
+  <!-- Phase 3 -->
+  <div class="phase" id="p3">
+    <div class="phase-header" onclick="toggle('p3')">
+      <span class="badge" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">Phase 3</span>
+      <div>
+        <div class="ph-title">Backend Server Setup</div>
+        <div class="ph-sub">Express app, middleware, error handling, DB connection</div>
+      </div>
+      <span class="chevron" id="c-p3">▶</span>
+    </div>
+    <div class="phase-body" id="b-p3">
+      <div class="steps">
+        <div class="step"><div class="step-num" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">1</div><div class="step-text">Create <code>server.js</code>: setup Express, CORS, <code>express.json()</code>, and port listener</div></div>
+        <div class="step"><div class="step-num" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">2</div><div class="step-text">Create <code>config/db.js</code>: export <code>pg.Pool</code>, test connection on startup</div></div>
+        <div class="step"><div class="step-num" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">3</div><div class="step-text">Add global <strong>error handling middleware</strong> and 404 handler</div></div>
+        <div class="step"><div class="step-num" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">4</div><div class="step-text">Setup <strong>route mounting</strong>: <code>/api/auth</code>, <code>/api/auctions</code>, <code>/api/bids</code>, <code>/api/users</code></div></div>
+        <div class="step"><div class="step-num" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">5</div><div class="step-text">Add rate limiting middleware (<code>express-rate-limit</code>) and request logging (<code>morgan</code>)</div></div>
+      </div>
+      <div class="tech-row">
+        <span class="tech">Express</span><span class="tech">cors</span><span class="tech">morgan</span><span class="tech">express-rate-limit</span>
+      </div>
+      <button class="ask-btn" onclick="sendPrompt('Write the Express server.js and db.js setup files for Smart Hammer')">Write server.js & db.js ↗</button>
+    </div>
+  </div>
+
+  <!-- Phase 4 -->
+  <div class="phase" id="p4">
+    <div class="phase-header" onclick="toggle('p4')">
+      <span class="badge" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">Phase 4</span>
+      <div>
+        <div class="ph-title">Authentication (JWT)</div>
+        <div class="ph-sub">Register, login, protected routes, token middleware</div>
+      </div>
+      <span class="chevron" id="c-p4">▶</span>
+    </div>
+    <div class="phase-body" id="b-p4">
+      <div class="steps">
+        <div class="step"><div class="step-num" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">1</div><div class="step-text">Create <code>POST /api/auth/register</code>: validate input, hash password with <code>bcryptjs</code>, insert user, return JWT</div></div>
+        <div class="step"><div class="step-num" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">2</div><div class="step-text">Create <code>POST /api/auth/login</code>: verify email + password, sign & return JWT with <code>user_id</code> payload</div></div>
+        <div class="step"><div class="step-num" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">3</div><div class="step-text">Build <strong>auth middleware</strong> (<code>middleware/auth.js</code>): verify JWT from <code>Authorization: Bearer</code> header, attach user to <code>req.user</code></div></div>
+        <div class="step"><div class="step-num" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">4</div><div class="step-text">Add role-based middleware: <strong>buyer</strong>, <strong>seller</strong>, <strong>admin</strong> roles</div></div>
+        <div class="step"><div class="step-num" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">5</div><div class="step-text">Frontend: store JWT in <code>localStorage</code>, add Axios interceptor to attach token to all requests</div></div>
+      </div>
+      <div class="tech-row">
+        <span class="tech">bcryptjs</span><span class="tech">jsonwebtoken</span><span class="tech">axios interceptors</span>
+      </div>
+      <button class="ask-btn" onclick="sendPrompt('Write the full authentication routes, controller, and JWT middleware for Smart Hammer')">Write auth routes & JWT middleware ↗</button>
+    </div>
+  </div>
+
+  <!-- Phase 5 -->
+  <div class="phase" id="p5">
+    <div class="phase-header" onclick="toggle('p5')">
+      <span class="badge" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">Phase 5</span>
+      <div>
+        <div class="ph-title">Core Auction API</div>
+        <div class="ph-sub">CRUD for auctions, bidding logic, auction expiry</div>
+      </div>
+      <span class="chevron" id="c-p5">▶</span>
+    </div>
+    <div class="phase-body" id="b-p5">
+      <div class="steps">
+        <div class="step"><div class="step-num" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">1</div><div class="step-text"><strong>Auction CRUD:</strong> create, get all, get by ID, update, delete (seller only)</div></div>
+        <div class="step"><div class="step-num" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">2</div><div class="step-text"><strong>Bid API:</strong> <code>POST /api/bids</code> — validate bid > current highest, check auction not expired, insert bid, update current price</div></div>
+        <div class="step"><div class="step-num" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">3</div><div class="step-text">Add <strong>auction status logic</strong>: <code>pending</code> → <code>active</code> → <code>ended</code> based on <code>start_time</code> / <code>end_time</code></div></div>
+        <div class="step"><div class="step-num" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">4</div><div class="step-text">Setup <strong>cron job</strong> (<code>node-cron</code>) to auto-expire auctions and declare winners</div></div>
+        <div class="step"><div class="step-num" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">5</div><div class="step-text">Add <strong>image upload</strong> for auction items using <code>multer</code> + Cloudinary</div></div>
+      </div>
+      <div class="tech-row">
+        <span class="tech">Express Router</span><span class="tech">node-cron</span><span class="tech">multer</span><span class="tech">Cloudinary</span>
+      </div>
+      <button class="ask-btn" onclick="sendPrompt('Write the auction routes, controller, and bid validation logic for Smart Hammer')">Write auction & bid API ↗</button>
+    </div>
+  </div>
+
+  <!-- Phase 6 -->
+  <div class="phase" id="p6">
+    <div class="phase-header" onclick="toggle('p6')">
+      <span class="badge" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">Phase 6</span>
+      <div>
+        <div class="ph-title">Real-time Bidding (Socket.io)</div>
+        <div class="ph-sub">Live bid updates, auction rooms, outbid notifications</div>
+      </div>
+      <span class="chevron" id="c-p6">▶</span>
+    </div>
+    <div class="phase-body" id="b-p6">
+      <div class="steps">
+        <div class="step"><div class="step-num" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">1</div><div class="step-text">Attach <code>socket.io</code> to the HTTP server, configure CORS for the client origin</div></div>
+        <div class="step"><div class="step-num" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">2</div><div class="step-text">Implement <strong>auction rooms</strong>: clients <code>join</code> room on <code>auction:${id}</code>, <code>leave</code> on disconnect</div></div>
+        <div class="step"><div class="step-num" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">3</div><div class="step-text">Emit <code>bid:new</code> event to all room members when a bid is placed — broadcast new price + bidder</div></div>
+        <div class="step"><div class="step-num" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">4</div><div class="step-text">Emit <code>auction:ended</code> event when the cron job closes an auction — show winner in real-time</div></div>
+        <div class="step"><div class="step-num" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">5</div><div class="step-text">Frontend: connect <code>socket.io-client</code>, listen for events, update bid UI without page reload</div></div>
+      </div>
+      <div class="tech-row">
+        <span class="tech">Socket.io</span><span class="tech">socket.io-client</span><span class="tech">rooms / namespaces</span>
+      </div>
+      <button class="ask-btn" onclick="sendPrompt('Write the Socket.io server setup and real-time bidding events for Smart Hammer')">Write real-time bidding code ↗</button>
+    </div>
+  </div>
+
+  <!-- Phase 7 -->
+  <div class="phase" id="p7">
+    <div class="phase-header" onclick="toggle('p7')">
+      <span class="badge" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">Phase 7</span>
+      <div>
+        <div class="ph-title">React Frontend</div>
+        <div class="ph-sub">Pages, components, state management, real-time UI</div>
+      </div>
+      <span class="chevron" id="c-p7">▶</span>
+    </div>
+    <div class="phase-body" id="b-p7">
+      <div class="steps">
+        <div class="step"><div class="step-num" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">1</div><div class="step-text">Setup routing: <code>/</code> (home), <code>/login</code>, <code>/register</code>, <code>/auctions</code>, <code>/auctions/:id</code>, <code>/dashboard</code>, <code>/create-auction</code></div></div>
+        <div class="step"><div class="step-num" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">2</div><div class="step-text">Build <strong>Auth Context</strong>: global user state, login/logout functions, protected route wrapper</div></div>
+        <div class="step"><div class="step-num" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">3</div><div class="step-text">Build key pages: <strong>Auction List</strong> (with filters/search), <strong>Auction Detail</strong> (live bid feed, countdown timer, bid form)</div></div>
+        <div class="step"><div class="step-num" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">4</div><div class="step-text">Build <strong>Seller Dashboard</strong>: create/manage auctions, view bid history, see winners</div></div>
+        <div class="step"><div class="step-num" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">5</div><div class="step-text">Connect Socket.io client: live bid updates on auction detail page, toast notifications for outbid events</div></div>
+      </div>
+      <div class="tech-row">
+        <span class="tech">React</span><span class="tech">React Router v6</span><span class="tech">Context API</span><span class="tech">Axios</span><span class="tech">Tailwind CSS</span>
+      </div>
+      <button class="ask-btn" onclick="sendPrompt('Build the React Auction Detail page with live bidding and Socket.io integration for Smart Hammer')">Build the auction detail page ↗</button>
+    </div>
+  </div>
+
+  <!-- Phase 8 -->
+  <div class="phase" id="p8">
+    <div class="phase-header" onclick="toggle('p8')">
+      <span class="badge" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">Phase 8</span>
+      <div>
+        <div class="ph-title">Testing, Payments & Deployment</div>
+        <div class="ph-sub">Stripe integration, testing, deploy to Railway + Vercel</div>
+      </div>
+      <span class="chevron" id="c-p8">▶</span>
+    </div>
+    <div class="phase-body" id="b-p8">
+      <div class="steps">
+        <div class="step"><div class="step-num" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">1</div><div class="step-text"><strong>Stripe integration:</strong> winner pays via Stripe Checkout — create payment intent on auction end, webhook to confirm</div></div>
+        <div class="step"><div class="step-num" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">2</div><div class="step-text">Write <strong>API tests</strong> with Jest + Supertest for auth, auction, and bid endpoints</div></div>
+        <div class="step"><div class="step-num" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">3</div><div class="step-text">Deploy <strong>PostgreSQL + Express</strong> to Railway (or Render) — set production env vars</div></div>
+        <div class="step"><div class="step-num" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">4</div><div class="step-text">Deploy <strong>React frontend</strong> to Vercel — set <code>REACT_APP_API_URL</code> to production backend URL</div></div>
+        <div class="step"><div class="step-num" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">5</div><div class="step-text">Configure Socket.io for production: sticky sessions or use Redis adapter for multiple server instances</div></div>
+      </div>
+      <div class="tech-row">
+        <span class="tech">Stripe</span><span class="tech">Jest</span><span class="tech">Supertest</span><span class="tech">Railway</span><span class="tech">Vercel</span><span class="tech">Redis</span>
+      </div>
+      <button class="ask-btn" onclick="sendPrompt('How do I deploy Smart Hammer PERN app to Railway and Vercel with production Socket.io?')">Guide me through deployment ↗</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggle(id) {
+  const body = document.getElementById('b-' + id);
+  const chev = document.getElementById('c-' + id);
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  chev.classList.toggle('open', !isOpen);
+}
+toggle('p1');
+</script>
