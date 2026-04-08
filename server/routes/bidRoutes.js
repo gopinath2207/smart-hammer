@@ -5,6 +5,8 @@ const {
   placeBid,
   getMyBids,
   getWonAuctions,
+  getNotifications,
+  markNotificationsRead,
 } = require('../controllers/bidController');
 
 const {
@@ -12,8 +14,10 @@ const {
   authorizeRoles,
 } = require('../middleware/auth');
 
-router.post('/',           authenticate, authorizeRoles('buyer'),  placeBid);
-router.get ('/my-bids',    authenticate,                           getMyBids);
-router.get ('/won',        authenticate, authorizeRoles('buyer'),  getWonAuctions);
+router.post  ('/',                     authenticate, authorizeRoles('buyer'),  placeBid);
+router.get   ('/my-bids',              authenticate,                           getMyBids);
+router.get   ('/won',                  authenticate, authorizeRoles('buyer'),  getWonAuctions);
+router.get   ('/notifications',        authenticate,                           getNotifications);
+router.patch ('/notifications/read',   authenticate,                           markNotificationsRead);
 
 module.exports = router;

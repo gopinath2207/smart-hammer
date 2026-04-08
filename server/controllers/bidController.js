@@ -11,8 +11,8 @@ const placeBid = async (req, res, next) => {
 
     if (!auction_id || !amount) {
       return res.status(400).json({
-        success: false,
-        message: 'Auction ID and bid amount are required.',
+        success : false,
+        message : 'Auction ID and bid amount are required.',
       });
     }
 
@@ -20,12 +20,12 @@ const placeBid = async (req, res, next) => {
 
     if (isNaN(bidAmount) || bidAmount <= 0) {
       return res.status(400).json({
-        success: false,
-        message: 'Bid amount must be a positive number.',
+        success : false,
+        message : 'Bid amount must be a positive number.',
       });
     }
 
-    // ── Lock the auction row for this transaction ──
+    // ── Lock auction row to prevent race conditions ──
     await client.query('BEGIN');
 
     const auctionResult = await client.query(
@@ -36,21 +36,21 @@ const placeBid = async (req, res, next) => {
     if (auctionResult.rows.length === 0) {
       await client.query('ROLLBACK');
       return res.status(404).json({
-        success: false,
-        message: 'Auction not found.',
+        success : false,
+        message : 'Auction not found.',
       });
     }
 
     const auction = auctionResult.rows[0];
 
-    // ── Validation checks ────────────────────
+    // ── Validation ────────────────────────────
 
     // 1. Cannot bid on own auction
     if (auction.seller_id === req.user.user_id) {
       await client.query('ROLLBACK');
       return res.status(403).json({
-        success: false,
-        message: 'You cannot bid on your own auction.',
+        success : false,
+        message : 'You cannot bid on your own auction.',
       });
     }
 
@@ -58,8 +58,8 @@ const placeBid = async (req, res, next) => {
     if (auction.status !== 'active') {
       await client.query('ROLLBACK');
       return res.status(400).json({
-        success: false,
-        message: `This auction is ${auction.status}. Bidding is not allowed.`,
+        success : false,
+        message : `This auction is ${auction.status}. Bidding is not allowed.`,
       });
     }
 
@@ -67,8 +67,8 @@ const placeBid = async (req, res, next) => {
     if (new Date() > new Date(auction.end_time)) {
       await client.query('ROLLBACK');
       return res.status(400).json({
-        success: false,
-        message: 'This auction has already ended.',
+        success : false,
+        message : 'This auction has already ended.',
       });
     }
 
@@ -86,10 +86,12 @@ const placeBid = async (req, res, next) => {
       });
     }
 
-    // 5. Cannot outbid yourself (you are already winning)
+    // 5. Cannot outbid yourself
     const currentWinner = await client.query(
-      `SELECT bidder_id FROM bids
-       WHERE auction_id = $1 AND is_winning = TRUE`,
+      `SELECT bidder_id, amount
+       FROM   bids
+       WHERE  auction_id = $1
+         AND  is_winning = TRUE`,
       [auction_id]
     );
 
@@ -99,12 +101,12 @@ const placeBid = async (req, res, next) => {
     ) {
       await client.query('ROLLBACK');
       return res.status(400).json({
-        success: false,
-        message: 'You are already the highest bidder.',
+        success : false,
+        message : 'You are already the highest bidder.',
       });
     }
 
-    // ── Place the bid ────────────────────────
+    // ── Place the bid ─────────────────────────
     const bidResult = await client.query(
       `INSERT INTO bids (auction_id, bidder_id, amount)
        VALUES ($1, $2, $3)
@@ -113,39 +115,41 @@ const placeBid = async (req, res, next) => {
     );
 
     const newBid = bidResult.rows[0];
-
     await client.query('COMMIT');
 
-    // ── Notify via Socket.io ─────────────────
+    // ── Build bid payload ─────────────────────
     const bidPayload = {
-      bid_id           : newBid.bid_id,
+      bid_id          : newBid.bid_id,
       auction_id,
-      amount           : bidAmount,
-      bidder_username  : req.user.username,
-      min_next_bid     : bidAmount + parseFloat(auction.bid_increment),
-      total_bids       : auction.total_bids + 1,
-      created_at       : newBid.created_at,
+      amount          : bidAmount,
+      bidder_username : req.user.username,
+      bidder_id       : req.user.user_id,
+      min_next_bid    : bidAmount + parseFloat(auction.bid_increment),
+      total_bids      : auction.total_bids + 1,
+      created_at      : newBid.created_at,
     };
 
-    // Broadcast new bid to everyone in the auction room
+    // ── Emit to entire auction room ───────────
     req.io.to(`auction:${auction_id}`).emit('bid:new', bidPayload);
 
-    // Notify the outbid user privately
+    // ── Notify outbid user privately ──────────
     if (currentWinner.rows.length > 0) {
-      req.io.to(`user:${currentWinner.rows[0].bidder_id}`).emit('bid:outbid', {
+      const outbidUser = currentWinner.rows[0];
+
+      req.io.to(`user:${outbidUser.bidder_id}`).emit('bid:outbid', {
         auction_id,
-        auction_title  : auction.title,
-        new_amount     : bidAmount,
-        message        : `You have been outbid on "${auction.title}". New bid: $${bidAmount}`,
+        auction_title : auction.title,
+        your_bid      : parseFloat(outbidUser.amount),
+        new_bid       : bidAmount,
+        message       : `You were outbid on "${auction.title}". New bid: $${bidAmount}`,
       });
 
       // Save outbid notification to DB
       await query(
-        `INSERT INTO notifications
-           (user_id, auction_id, type, message)
+        `INSERT INTO notifications (user_id, auction_id, type, message)
          VALUES ($1, $2, 'outbid', $3)`,
         [
-          currentWinner.rows[0].bidder_id,
+          outbidUser.bidder_id,
           auction_id,
           `You were outbid on "${auction.title}". Current price: $${bidAmount}`,
         ]
@@ -153,9 +157,9 @@ const placeBid = async (req, res, next) => {
     }
 
     res.status(201).json({
-      success  : true,
-      message  : 'Bid placed successfully.',
-      bid      : bidPayload,
+      success : true,
+      message : 'Bid placed successfully.',
+      bid     : bidPayload,
     });
   } catch (err) {
     await client.query('ROLLBACK');
@@ -182,10 +186,10 @@ const getMyBids = async (req, res, next) => {
          b.is_winning,
          b.created_at,
          a.auction_id,
-         a.title          AS auction_title,
+         a.title         AS auction_title,
          a.current_price,
          a.end_time,
-         a.status         AS auction_status,
+         a.status        AS auction_status,
          a.image_urls,
          CASE
            WHEN b.is_winning AND a.status = 'ended' THEN 'won'
@@ -193,10 +197,10 @@ const getMyBids = async (req, res, next) => {
            WHEN a.status = 'ended'                   THEN 'lost'
            ELSE 'outbid'
          END AS bid_status
-       FROM bids b
-       JOIN auctions a ON b.auction_id = a.auction_id
-       WHERE b.bidder_id = $1
-       ORDER BY b.created_at DESC
+       FROM      bids     b
+       JOIN      auctions a ON b.auction_id = a.auction_id
+       WHERE     b.bidder_id = $1
+       ORDER BY  b.created_at DESC
        LIMIT $2 OFFSET $3`,
       [req.user.user_id, limit, offset]
     );
@@ -224,28 +228,88 @@ const getWonAuctions = async (req, res, next) => {
          a.current_price  AS winning_amount,
          a.end_time,
          a.image_urls,
-         a.seller_id,
          u.username       AS seller_username,
          p.status         AS payment_status
-       FROM auctions a
-       JOIN users    u ON a.seller_id  = u.user_id
+       FROM      auctions a
+       JOIN      users    u ON a.seller_id  = u.user_id
        LEFT JOIN payments p
-         ON a.auction_id = p.auction_id
-         AND p.payer_id  = $1
-       WHERE a.winner_id = $1
-         AND a.status    = 'ended'
+              ON a.auction_id = p.auction_id
+             AND p.payer_id   = $1
+       WHERE  a.winner_id = $1
+         AND  a.status    = 'ended'
        ORDER BY a.end_time DESC`,
       [req.user.user_id]
     );
 
     res.status(200).json({
-      success       : true,
-      count         : result.rows.length,
-      won_auctions  : result.rows,
+      success      : true,
+      count        : result.rows.length,
+      won_auctions : result.rows,
     });
   } catch (err) {
     next(err);
   }
 };
 
-module.exports = { placeBid, getMyBids, getWonAuctions };
+// ─────────────────────────────────────────────
+// @route   GET /api/bids/notifications
+// @access  Private
+// ─────────────────────────────────────────────
+const getNotifications = async (req, res, next) => {
+  try {
+    const result = await query(
+      `SELECT
+         n.notification_id,
+         n.type,
+         n.message,
+         n.is_read,
+         n.created_at,
+         a.title      AS auction_title,
+         a.image_urls AS auction_images
+       FROM      notifications n
+       LEFT JOIN auctions      a ON n.auction_id = a.auction_id
+       WHERE     n.user_id = $1
+       ORDER BY  n.created_at DESC
+       LIMIT 50`,
+      [req.user.user_id]
+    );
+
+    res.status(200).json({
+      success       : true,
+      count         : result.rows.length,
+      notifications : result.rows,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ─────────────────────────────────────────────
+// @route   PATCH /api/bids/notifications/read
+// @access  Private
+// ─────────────────────────────────────────────
+const markNotificationsRead = async (req, res, next) => {
+  try {
+    await query(
+      `UPDATE notifications
+       SET    is_read = TRUE
+       WHERE  user_id = $1`,
+      [req.user.user_id]
+    );
+
+    res.status(200).json({
+      success : true,
+      message : 'All notifications marked as read.',
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = {
+  placeBid,
+  getMyBids,
+  getWonAuctions,
+  getNotifications,
+  markNotificationsRead,
+};
