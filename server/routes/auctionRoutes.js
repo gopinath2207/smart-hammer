@@ -1,5 +1,6 @@
 const express = require('express');
 const router  = express.Router();
+const upload  = require('../middleware/upload');
 
 const {
   getAllAuctions,
@@ -28,6 +29,7 @@ router.get ('/:id/bids',                     getAuctionBids);
 router.post('/',
   authenticate,
   authorizeRoles('seller', 'admin'),
+  upload.array('images', 5),   // up to 5 product images
   createAuction
 );
 

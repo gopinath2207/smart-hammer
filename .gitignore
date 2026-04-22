@@ -75,3 +75,9 @@ coverage/
 .cache/
 tmp/
 temp/
+
+# ========================
+# Uploaded media files
+# ========================
+server/uploads/
+uploads/

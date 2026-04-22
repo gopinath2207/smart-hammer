@@ -2,6 +2,7 @@ const express      = require('express');
 const cors         = require('cors');
 const morgan       = require('morgan');
 const rateLimit    = require('express-rate-limit');
+const path         = require('path');
 const { createServer } = require('http');
 const { Server }   = require('socket.io');
 require('dotenv').config();
@@ -13,6 +14,7 @@ const authRoutes       = require('./routes/authRoutes');
 const auctionRoutes    = require('./routes/auctionRoutes');
 const bidRoutes        = require('./routes/bidRoutes');
 const userRoutes       = require('./routes/userRoutes');
+const paymentRoutes    = require('./routes/paymentRoutes');
 const { startAuctionCron } = require('./controllers/auctionCron');
 
 // ─────────────────────────────────────────────
@@ -72,6 +74,9 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
+// Serve uploaded product images
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // ─────────────────────────────────────────────
 // Rate Limiting
 // ─────────────────────────────────────────────
@@ -117,6 +122,7 @@ app.use('/api/auth',     authLimiter,  authRoutes);
 app.use('/api/auctions', apiLimiter,   auctionRoutes);
 app.use('/api/bids',     bidLimiter,   bidRoutes);
 app.use('/api/users',    apiLimiter,   userRoutes);
+app.use('/api/payments', apiLimiter,   paymentRoutes);
 
 // ─────────────────────────────────────────────
 // Health Check

@@ -14,7 +14,7 @@ const {
   authorizeRoles,
 } = require('../middleware/auth');
 
-router.post  ('/',                     authenticate, authorizeRoles('buyer'),  placeBid);
+router.post  ('/',                     authenticate,                           placeBid);
 router.get   ('/my-bids',              authenticate,                           getMyBids);
 router.get   ('/won',                  authenticate, authorizeRoles('buyer'),  getWonAuctions);
 router.get   ('/notifications',        authenticate,                           getNotifications);

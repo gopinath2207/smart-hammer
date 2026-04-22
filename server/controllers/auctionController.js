@@ -225,9 +225,10 @@ const createAuction = async (req, res, next) => {
     }
 
     // ── Handle uploaded images ───────────────
-    const image_urls = req.files
-      ? req.files.map((f) => f.path)
-      : req.body.image_urls || [];
+    const BASE_URL   = process.env.API_URL || `http://localhost:${process.env.PORT || 5000}`;
+    const image_urls = req.files && req.files.length > 0
+      ? req.files.map((f) => `${BASE_URL}/uploads/${f.filename}`)
+      : (req.body.image_urls || []);
 
     // ── Determine status in JS (avoids $9 type conflict) ──
     const status = start <= now ? 'active' : 'pending';

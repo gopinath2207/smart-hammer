@@ -280,6 +280,13 @@ const login = async (req, res, next) => {
     }
 
     const token = generateToken(user);
+    // ADD this check before the response:
+    if (user.role === 'employee' && !employeeDetails) {
+      return res.status(403).json({
+        success: false,
+        message: 'Employee profile incomplete. Contact admin.',
+      });
+    }
 
     res.status(200).json({
       success : true,

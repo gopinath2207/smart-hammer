@@ -312,22 +312,25 @@ VALUES (
 -- ============================================
 -- SEED DATA — Default Employee (password: Employee@123)
 -- ============================================
-INSERT INTO users (username, email, password_hash, full_name, role, is_verified)
-VALUES (
-    'employee1',
-    'employee1@smarthammer.com',
-    '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
-    'Smart Hammer Employee',
-    'employee',
-    TRUE
-)
-RETURNING user_id;
+DO $$
+DECLARE
+    v_user_id UUID;
+BEGIN
+    INSERT INTO users (username, email, password_hash, full_name, role, is_verified)
+    VALUES (
+        'employee1',
+        'employee1@smarthammer.com',
+        '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+        'Smart Hammer Employee',
+        'employee',
+        TRUE
+    ) RETURNING user_id INTO v_user_id;
 
--- Then insert into employee_details using the returned user_id:
-INSERT INTO employee_details (user_id, department, designation, employee_code)
-VALUES (
-    (SELECT user_id FROM users WHERE username = 'employee1'),
-    'Operations',
-    'Auction Moderator',
-    'EMP-001'
-);
+    INSERT INTO employee_details (user_id, department, designation, employee_code)
+    VALUES (
+        v_user_id,
+        'Operations',
+        'Auction Moderator',
+        'EMP-001'
+    );
+END $$;
