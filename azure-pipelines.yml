@@ -1,0 +1,177 @@
+# ═══════════════════════════════════════════════════════
+#  Smart Hammer — Azure DevOps CI/CD Pipeline
+#  Backend  : Azure App Service (Linux, Node 20)
+#  Frontend : Azure Static Web Apps
+#  Database : Azure Database for PostgreSQL
+# ═══════════════════════════════════════════════════════
+
+trigger:
+  branches:
+    include:
+      - main        # Auto-deploy on every push to main
+  paths:
+    exclude:
+      - '*.md'      # Skip pipeline for doc-only changes
+      - 'DEPLOYMENT.md'
+
+pr: none            # Don't run on Pull Requests (optional: change to 'main')
+
+# ── Pipeline-level variables (non-secret) ─────────────
+variables:
+  nodeVersion: '20.x'
+  serverDir: 'server'
+  clientDir: 'client'
+  # Secret variables are set in Azure DevOps → Library → Variable Groups
+  # See DEPLOYMENT.md for instructions
+
+# ══════════════════════════════════════════════════════
+#  STAGE 1: BUILD
+# ══════════════════════════════════════════════════════
+stages:
+  - stage: Build
+    displayName: '🔨 Build'
+    jobs:
+
+      # ── Job 1: Build Server ───────────────────────
+      - job: BuildServer
+        displayName: 'Build Node.js Server'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - task: NodeTool@0
+            displayName: 'Use Node.js $(nodeVersion)'
+            inputs:
+              versionSpec: $(nodeVersion)
+
+          - script: npm ci
+            displayName: 'Install server dependencies'
+            workingDirectory: $(serverDir)
+
+          # Copy server files (exclude dev files & uploads)
+          - task: CopyFiles@2
+            displayName: 'Stage server files'
+            inputs:
+              SourceFolder: $(serverDir)
+              Contents: |
+                **/*
+                !node_modules/**
+                !uploads/**
+                !.env
+                !*.local
+                !check-db.js
+                !repair-db.js
+                !repair-triggers.js
+                !fix-employee-seed.js
+              TargetFolder: '$(Build.ArtifactStagingDirectory)/server'
+
+          # Copy node_modules for deployment (no npm install on App Service)
+          - task: CopyFiles@2
+            displayName: 'Stage server node_modules'
+            inputs:
+              SourceFolder: '$(serverDir)/node_modules'
+              TargetFolder: '$(Build.ArtifactStagingDirectory)/server/node_modules'
+
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish server artifact'
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)/server'
+              ArtifactName: 'server-drop'
+              publishLocation: 'Container'
+
+      # ── Job 2: Build Client (React + Vite) ────────
+      - job: BuildClient
+        displayName: 'Build React Client'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - task: NodeTool@0
+            displayName: 'Use Node.js $(nodeVersion)'
+            inputs:
+              versionSpec: $(nodeVersion)
+
+          - script: npm ci
+            displayName: 'Install client dependencies'
+            workingDirectory: $(clientDir)
+
+          # Inject production env variables for Vite build
+          - script: |
+              echo "VITE_API_URL=$(VITE_API_URL)" >> $(clientDir)/.env.production
+              echo "VITE_SOCKET_URL=$(VITE_SOCKET_URL)" >> $(clientDir)/.env.production
+            displayName: 'Write .env.production'
+            # VITE_API_URL and VITE_SOCKET_URL come from Azure DevOps Variable Group
+
+          - script: npm run build
+            displayName: 'Vite build (production)'
+            workingDirectory: $(clientDir)
+
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish client artifact'
+            inputs:
+              PathtoPublish: '$(clientDir)/dist'
+              ArtifactName: 'client-drop'
+              publishLocation: 'Container'
+
+  # ══════════════════════════════════════════════════════
+  #  STAGE 2: DEPLOY
+  # ══════════════════════════════════════════════════════
+  - stage: Deploy
+    displayName: '🚀 Deploy'
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+
+      # ── Job 1: Deploy Backend to App Service ──────
+      - deployment: DeployBackend
+        displayName: 'Deploy to Azure App Service'
+        pool:
+          vmImage: 'ubuntu-latest'
+        environment: 'production'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: DownloadBuildArtifacts@1
+                  displayName: 'Download server artifact'
+                  inputs:
+                    buildType: 'current'
+                    downloadType: 'single'
+                    artifactName: 'server-drop'
+                    downloadPath: '$(System.ArtifactsDirectory)'
+
+                - task: AzureWebApp@1
+                  displayName: 'Deploy to App Service'
+                  inputs:
+                    azureSubscription: '$(AZURE_SERVICE_CONNECTION)'   # Set in Variable Group
+                    appType: 'webAppLinux'
+                    appName: '$(APP_SERVICE_NAME)'                     # Set in Variable Group
+                    package: '$(System.ArtifactsDirectory)/server-drop'
+                    runtimeStack: 'NODE|20-lts'
+                    startUpCommand: 'node server.js'
+
+      # ── Job 2: Deploy Frontend to Static Web Apps ─
+      - deployment: DeployFrontend
+        displayName: 'Deploy to Azure Static Web Apps'
+        pool:
+          vmImage: 'ubuntu-latest'
+        environment: 'production'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: DownloadBuildArtifacts@1
+                  displayName: 'Download client artifact'
+                  inputs:
+                    buildType: 'current'
+                    downloadType: 'single'
+                    artifactName: 'client-drop'
+                    downloadPath: '$(System.ArtifactsDirectory)'
+
+                - task: AzureStaticWebApp@0
+                  displayName: 'Deploy to Static Web Apps'
+                  inputs:
+                    app_location: '/'
+                    output_location: ''           # Already built — no rebuild
+                    azure_static_web_apps_api_token: '$(STATIC_WEB_APP_TOKEN)'  # From Variable Group
+                  env:
+                    # Point to pre-built output
+                    IS_STATIC_EXPORT: true
